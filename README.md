@@ -69,16 +69,24 @@ this, nothing downstream matters.** Ships with the three worked scenarios from
 python3 tools/unit_economics.py --scenario classic     # the dead model
 python3 tools/unit_economics.py --scenario viable      # what to aim for
 python3 tools/unit_economics.py --scenario scaled      # post-validation, held inventory
+python3 tools/unit_economics.py --scenario eu-sme      # EU under the VAT threshold
+python3 tools/unit_economics.py --scenario eu-vat      # EU once VAT-registered
 ```
 
 ## Status
 
 Planning phase. No capital committed, no supplier contacted, no store built.
 
-**Open decision blocking execution: which market are we selling into?** The entire
-sourcing and logistics chain forks on this — the de minimis repeal above is US-specific,
-and the EU/UK/BR each have their own thresholds and VAT regimes. See
+**Market decided: EU, operating from Bulgaria.** The EU replaced its €150 duty relief on
+1 Jul 2026 with a **flat €3 per item** transitional duty (until mid-2028), against full
+ad valorem duty on every US-bound parcel — which is what makes the EU maths close where
+the US maths does not. Bulgaria adds a 10% flat corporate tax, euro pricing since Jan 2026,
+and customs-union access to the whole market on a single import. Full reasoning, plus the
+VAT threshold decision worth ~€9.83/order, in
 [`docs/03-operations.md`](docs/03-operations.md#market-selection).
+
+**Next open decision: the niche.** Audience first, product second — see
+[`docs/02-product-selection.md`](docs/02-product-selection.md).
 
 ## Sources
 

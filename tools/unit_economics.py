@@ -39,11 +39,40 @@ class Scenario:
     orders_per_customer: float = 1.0
     actual_cac: float | None = None   # None => derive from benchmarks
     cac_label: str = "cold paid (benchmark)"
+    currency: str = "$"
+
+    # EU/2026 customs. Since 1 Jul 2026 the EU charges a flat transitional
+    # duty per item instead of the old under-€150 relief, plus a handling
+    # fee from 1 Nov 2026. Both are per-parcel, not ad valorem.
+    duty_flat: float = 0.0
+    handling: float = 0.0
+
+    # VAT. Two regimes matter for a Bulgarian seller:
+    #   vat_rate > 0, vat_registered=True  -> price is VAT-inclusive, you
+    #       remit the VAT out of it, and import VAT on COGS is reclaimable.
+    #   vat_rate > 0, vat_registered=False -> EU SME scheme (turnover under
+    #       €100k): you charge no VAT, but import VAT is a sunk cost.
+    vat_rate: float = 0.0
+    vat_registered: bool = True
 
     # --- derived ---
     @property
     def duty(self) -> float:
-        return self.cogs * self.duty_pct / 100
+        return self.cogs * self.duty_pct / 100 + self.duty_flat
+
+    @property
+    def vat_remitted(self) -> float:
+        """VAT handed to the state out of a VAT-inclusive price."""
+        if not (self.vat_rate and self.vat_registered):
+            return 0.0
+        return self.price - self.price / (1 + self.vat_rate)
+
+    @property
+    def import_vat(self) -> float:
+        """Unrecoverable import VAT — only bites outside the VAT system."""
+        if not self.vat_rate or self.vat_registered:
+            return 0.0
+        return (self.cogs + self.duty) * self.vat_rate
 
     @property
     def processing(self) -> float:
@@ -59,7 +88,8 @@ class Scenario:
 
     @property
     def contribution(self) -> float:
-        return (self.price - self.cogs - self.duty - self.ship
+        return (self.price - self.vat_remitted - self.cogs - self.duty
+                - self.import_vat - self.handling - self.ship
                 - self.processing - self.channel_fee - self.refund_cost)
 
     @property
@@ -110,23 +140,50 @@ SCENARIOS = {
         refund_rate=0.03, orders_per_customer=2.8,
         actual_cac=45.00, cac_label="paid, warm brand",
     ),
+    "eu-sme": Scenario(
+        name="D — EU via Bulgaria, under the SME threshold",
+        note="Flat EU duty + handling. No VAT charged (turnover under EUR 100k).",
+        price=89.00, cogs=22.00, duty_pct=0.0, duty_flat=3.00, handling=2.00,
+        ship=8.00, refund_rate=0.04, orders_per_customer=2.2,
+        vat_rate=0.20, vat_registered=False, currency="EUR ",
+    ),
+    "eu-vat": Scenario(
+        name="E — EU via Bulgaria, VAT-registered",
+        note="Same product once turnover crosses EUR 100k and VAT must be charged.",
+        price=89.00, cogs=22.00, duty_pct=0.0, duty_flat=3.00, handling=2.00,
+        ship=8.00, refund_rate=0.04, orders_per_customer=2.2,
+        vat_rate=0.20, vat_registered=True, currency="EUR ",
+    ),
 }
 
 
-def money(x: float) -> str:
-    return f"${x:>8,.2f}"
+def money(x: float, cur: str = "$") -> str:
+    return f"{cur}{x:>8,.2f}"
 
 
 def report(s: Scenario) -> None:
+    cur = s.currency
+    m = lambda x: money(x, cur)
+
     print(f"\n\033[1m{s.name}\033[0m")
     print(f"  {s.note}\n")
 
-    rows = [
-        ("Price", s.price),
-        ("COGS", -s.cogs),
-        (f"Duty/tariff ({s.duty_pct:.0f}% of COGS)", -s.duty),
+    rows = [("Price" + (" (VAT-inclusive)" if s.vat_remitted else ""), s.price)]
+    if s.vat_remitted:
+        rows.append((f"VAT remitted ({s.vat_rate:.0%})", -s.vat_remitted))
+    rows.append(("COGS", -s.cogs))
+    if s.duty_flat:
+        rows.append(("Duty (EU flat, per item)", -s.duty))
+    else:
+        rows.append((f"Duty/tariff ({s.duty_pct:.0f}% of COGS)", -s.duty))
+    if s.handling:
+        rows.append(("Customs handling fee", -s.handling))
+    if s.import_vat:
+        rows.append((f"Import VAT ({s.vat_rate:.0%}, unrecoverable)", -s.import_vat))
+    rows += [
         ("Shipping to customer", -s.ship),
-        (f"Payment processing ({STRIPE_PCT:.1%} + ${STRIPE_FLAT:.2f})", -s.processing),
+        (f"Payment processing ({STRIPE_PCT:.1%} + {cur}{STRIPE_FLAT:.2f})",
+         -s.processing),
     ]
     if s.channel_pct:
         rows.append((f"Channel fee ({s.channel_pct:.1%})", -s.channel_fee))
@@ -134,15 +191,15 @@ def report(s: Scenario) -> None:
 
     width = max(len(label) for label, _ in rows) + 2
     for label, amount in rows:
-        print(f"  {label:<{width}}{money(amount)}")
-    print(f"  {'-' * (width + 10)}")
-    print(f"  {'Contribution margin':<{width}}{money(s.contribution)}"
+        print(f"  {label:<{width}}{m(amount)}")
+    print(f"  {'-' * (width + 12)}")
+    print(f"  {'Contribution margin':<{width}}{m(s.contribution)}"
           f"   ({s.contribution_pct:.0%})")
 
-    print(f"\n  {'Breakeven CAC':<{width}}{money(s.breakeven_cac)}")
-    print(f"  {'Actual CAC — ' + s.cac_label:<{width}}{money(s.cac)}")
+    print(f"\n  {'Breakeven CAC':<{width}}{m(s.breakeven_cac)}")
+    print(f"  {'Actual CAC — ' + s.cac_label:<{width}}{m(s.cac)}")
     print(f"  {'Orders per customer':<{width}}{s.orders_per_customer:>9.1f}")
-    print(f"  {'LTV (contribution basis)':<{width}}{money(s.ltv)}")
+    print(f"  {'LTV (contribution basis)':<{width}}{m(s.ltv)}")
 
     ratio = s.ltv_cac
     flag = "\033[32mOK\033[0m" if ratio >= GATE_LTV_CAC else (
@@ -151,7 +208,7 @@ def report(s: Scenario) -> None:
 
     per_order = s.contribution - s.cac
     if per_order < 0:
-        print(f"\n  \033[31mFirst-order result: {money(per_order)} — "
+        print(f"\n  \033[31mFirst-order result: {m(per_order)} — "
               f"loses money on every acquisition.\033[0m")
 
     gates(s)

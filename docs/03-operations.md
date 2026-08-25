@@ -2,23 +2,56 @@
 
 ## Market selection
 
-**This is the open decision blocking execution.** Everything below forks on it, so decide
-first.
+**Decided: EU, operating from Bulgaria.** The reasoning is below; it is not close.
 
-| Market | Import situation | Notes |
+| Market | Import situation | Verdict |
 |---|---|---|
-| **US** | De minimis suspended indefinitely (Jun 2026), full repeal Jul 2027. All parcels dutiable. | Biggest market, best organic reach, worst import maths, highest chargeback rates |
-| **EU** | No de minimis for VAT since 2021; IOSS registration required. Customs duty relief under €150. | VAT complexity, but €150 duty threshold still helps under-€150 goods |
-| **UK** | £135 threshold; VAT collected at point of sale above it. | Simpler than EU, smaller market |
-| **Brazil** | Remessa Conforme; ~20% import tax under $50 + 17% ICMS, higher above. | Relevant if operating locally; different platform mix (Shopee/ML dominant) |
+| **EU** | €150 relief abolished 1 Jul 2026, replaced by a **flat €3/item** transitional duty until the Customs Data Hub goes live mid-2028; €2 handling fee from 1 Nov 2026. | ✅ **Chosen** |
+| **US** | De minimis suspended indefinitely (Jun 2026), statutory repeal Jul 2027. Full ad valorem duty on every parcel. | ❌ Worse maths, no home advantage |
+| **UK** | £135 threshold, VAT at point of sale above it. | ➖ Viable, smaller, post-Brexit customs friction from the EU |
+| **Brazil** | Remessa Conforme; ~20% import tax + 17% ICMS. | ❌ No connection to it |
 
-The plan as written assumes **US** in its worked examples. If we're selling elsewhere,
-the unit economics inputs change (duty rates, VAT treatment, shipping) but the *structure*
-of the plan doesn't — swap the numbers in `tools/unit_economics.py` and re-run the gates.
+### Why the EU wins for us
 
-Note that where you *live* and where you *sell* are separate questions. You can operate a
-US-facing store from anywhere; it mainly changes payment-processor onboarding and tax
-registration, not the product strategy.
+1. **The flat duty is a structural gift.** The US charges full ad valorem duty per parcel.
+   The EU currently charges **€3 flat per item**, whatever the value. On an €89 order that
+   is 3.4%. This is the single biggest reason the EU maths closes where the US maths does
+   not — and it is explicitly transitional, so it is an advantage with a clock on it
+   (standard tariff rates return when the Data Hub lands mid-2028).
+2. **Bulgaria is in the customs union.** Import once, clear once, then ship anywhere in
+   the EU with no further customs. A US-facing business from Bulgaria pays duty on every
+   single parcel and has no way around it.
+3. **10% flat corporate tax.** Among the lowest in the EU. Personal income tax also 10%,
+   dividend tax 5%.
+4. **The euro removes FX friction.** Bulgaria adopted it on 1 Jan 2026 at 1.95583 BGN.
+   You now price, buy, and bank in the same currency as most of your market.
+5. **Home-market operations.** Same timezone as customers, local accountant, local bank,
+   no US sales-tax nexus regime to track across 50 states.
+
+### The VAT decision that is worth real money
+
+Since 1 Jan 2026 the **EU SME scheme** lets a business under **€100,000** total annual EU
+turnover sell cross-border **without charging VAT at all**. Bulgaria's own registration
+threshold is €51,130, now assessed on a calendar-year basis.
+
+Run both ways on the same product:
+
+```bash
+python3 tools/unit_economics.py --scenario eu-sme   # EUR 42.56 contribution (48%)
+python3 tools/unit_economics.py --scenario eu-vat   # EUR 32.73 contribution (37%)
+```
+
+**Staying under the threshold is worth ~€9.83 per order.** Under the SME scheme you keep
+the full €89 and eat unrecoverable import VAT on COGS; VAT-registered, you hand €14.83 of
+every €89 to the state and only reclaim input VAT on a €22 cost base.
+
+Two consequences:
+- During validation, **stay under €100k deliberately.** It is not a milestone to rush.
+- Crossing it is a real step-down in margin. Plan the price increase or the move to held
+  inventory (which cuts COGS) to land at the same time, not after.
+
+Confirm all of this with a Bulgarian accountant before registering anything. The rules
+above are current as of Aug 2026 and the customs side is explicitly transitional.
 
 ## Stack
 
