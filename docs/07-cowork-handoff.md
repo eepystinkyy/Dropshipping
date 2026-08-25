@@ -22,25 +22,34 @@ If Cowork is pointed at a plain local folder rather than the GitHub connector, *
 no bridge** — it writes to your disk, web Claude Code works in a container, and neither
 sees the other. Turn that folder into a clone once, and git becomes the bridge.
 
-Ask Cowork to run this (it has shell access in local execution mode):
+**Cowork may not have shell access.** It varies by session — a Cowork session can be able
+to read and write files in a connected folder while still being unable to run `git`. Do
+not assume; ask it. If it can't, you run the git commands and Cowork just edits files.
 
-```bash
-cd ~/Documents
-git clone https://github.com/eepystinkyy/Dropshipping.git dropshipping-tmp
-mv dropshipping-tmp/.git dropshipping-tmp/* dropshipping-tmp/.[!.]* "Dropshipping 1o1"/
-rmdir dropshipping-tmp
-cd "Dropshipping 1o1" && git checkout claude/dropshipping-business-plan-60p144
+**One-time setup** (in your own terminal — Windows paths shown):
+
+```bat
+cd C:\Dropshipping
+git clone -b claude/dropshipping-business-plan-60p144 https://github.com/eepystinkyy/Dropshipping.git .
 ```
 
-Cloning into a temp directory and moving the contents preserves anything already in the
-folder — `git clone` refuses to write into a non-empty directory. If the folder is empty,
-just clone straight into it.
+The trailing `.` clones into the current folder, which must be empty. The `-b` flag lands
+you on the working branch directly — a plain clone gets `main`, which is nearly empty.
 
-Then confirm: `git status` should list the repo files, and `CLAUDE.md` should be present.
+Then in Cowork: **Add folder** → pick `C:\Dropshipping`.
 
-From then on Cowork pulls at session start and pushes when done, per the instructions in
-`CLAUDE.md`. If Cowork can't run shell commands in your setup, you run those three
-commands yourself, or use the GitHub connector instead of a local folder.
+Confirm with `git status`, and check `CLAUDE.md` is present.
+
+**Every session after that**, run `sync.cmd` in the repo folder — before you start, and
+again when Cowork finishes. It pulls, then commits and pushes anything Cowork changed:
+
+```bat
+sync.cmd
+sync.cmd added three candidate audiences
+```
+
+The optional argument becomes the commit message. On macOS or Linux use `./sync.sh`
+instead. If either reports a **conflict**, stop and ask Claude Code — don't force it.
 
 ## Claude Code
 
