@@ -16,6 +16,32 @@ valorem duty on every parcel.
 If it doesn't know, it isn't reading `CLAUDE.md`. Fix that before doing any work, or the
 two tools will drift within a day.
 
+## Making the Cowork folder the repo
+
+If Cowork is pointed at a plain local folder rather than the GitHub connector, **there is
+no bridge** — it writes to your disk, web Claude Code works in a container, and neither
+sees the other. Turn that folder into a clone once, and git becomes the bridge.
+
+Ask Cowork to run this (it has shell access in local execution mode):
+
+```bash
+cd ~/Documents
+git clone https://github.com/eepystinkyy/Dropshipping.git dropshipping-tmp
+mv dropshipping-tmp/.git dropshipping-tmp/* dropshipping-tmp/.[!.]* "Dropshipping 1o1"/
+rmdir dropshipping-tmp
+cd "Dropshipping 1o1" && git checkout claude/dropshipping-business-plan-60p144
+```
+
+Cloning into a temp directory and moving the contents preserves anything already in the
+folder — `git clone` refuses to write into a non-empty directory. If the folder is empty,
+just clone straight into it.
+
+Then confirm: `git status` should list the repo files, and `CLAUDE.md` should be present.
+
+From then on Cowork pulls at session start and pushes when done, per the instructions in
+`CLAUDE.md`. If Cowork can't run shell commands in your setup, you run those three
+commands yourself, or use the GitHub connector instead of a local folder.
+
 ## Claude Code
 
 **Through claude.ai/code (web):** nothing to set up. The session clones the repo at

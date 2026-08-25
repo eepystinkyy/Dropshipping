@@ -60,6 +60,31 @@ tools/unit_economics.py       contribution margin / breakeven CAC calculator
 research/                     working notes, supplier quotes, candidate briefs
 ```
 
+## If you are Cowork working in a local folder
+
+This folder is a git clone. **Git is the only bridge between you and Claude Code.** A
+file you write here is invisible to Claude Code until it is committed and pushed.
+
+At the **start** of every session, before reading or editing anything:
+
+```bash
+git pull
+```
+
+At the **end** of every session, or whenever you finish a piece of work:
+
+```bash
+git add -A
+git commit -m "short description of what you did"
+git push
+```
+
+If you cannot run shell commands, **say so explicitly** rather than skipping this — the
+work will otherwise sit on one machine and quietly diverge. Tell the user to run the
+three commands above, or to hand the files to Claude Code.
+
+If `git pull` reports a conflict, stop and ask. Do not force anything.
+
 ## Tool ownership — respect this or the two agents will fight
 
 - **Claude Code owns `docs/`, `tools/`, and this file.** Durable decisions, anything
