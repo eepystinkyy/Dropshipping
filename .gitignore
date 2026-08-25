@@ -1,0 +1,39 @@
+# Secrets — never commit these. Once in history they need a rewrite to remove,
+# and any key that reaches GitHub must be treated as compromised and rotated.
+.env
+.env.*
+*.pem
+*.key
+credentials.json
+service-account*.json
+secrets/
+
+# Large binaries. Git stores every version forever, so a 200MB ad reel makes
+# the repo permanently slow for everyone. Creative assets belong in object
+# storage or Drive, with the repo holding a link or a manifest.
+*.mp4
+*.mov
+*.avi
+*.psd
+*.ai
+*.zip
+*.tar.gz
+assets/raw/
+
+# Working data — regenerate, don't version. Order exports and scraped data
+# also tend to contain customer personal data, which under GDPR should not be
+# sitting in a git history.
+*.sqlite
+*.db
+data/exports/
+data/raw/
+
+# Runtime junk
+__pycache__/
+*.pyc
+.venv/
+venv/
+node_modules/
+.DS_Store
+Thumbs.db
+.ipynb_checkpoints/
