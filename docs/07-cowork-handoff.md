@@ -77,6 +77,21 @@ claude
    chat transcript neither tool can see next week.
 4. **Commit before switching tools.** Uncommitted work is invisible to the other side.
 
+## Stay on one branch
+
+Work stays on `claude/dropshipping-business-plan-60p144`. There is no reason to switch —
+branches are for parallel work streams, and this is one person on one plan.
+
+Specifically, avoid `git checkout main`. Every doc disappears from the folder, because
+`main` holds only the README. Nothing is lost, but it looks exactly like data loss.
+
+```bash
+git branch --show-current                              # where am I?
+git checkout claude/dropshipping-business-plan-60p144   # get back
+```
+
+Individual commits never need touching. Each is a save point, not somewhere to stand.
+
 ## Next task: the niche
 
 The only thing blocking Gate 1. Paste this into Cowork:
